@@ -1,0 +1,919 @@
+<!doctype html>
+<html lang="id">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Kalkulator</title>
+    <link
+      href="https://fonts.googleapis.com/css2?family=Share+Tech+Mono&family=Rajdhani:wght@400;600;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <style>
+      /* =====================================================
+         CSS VARIABLES (VARIABEL GLOBAL)
+         Semua warna, ukuran, dan efek didefinisikan di sini
+         agar mudah diubah hanya dari satu tempat.
+      ===================================================== */
+      :root {
+        --bg: #272727; /* Latar belakang utama */
+        --panel: #f07fb7; /* Warna panel kalkulator */
+        --border: #1f2433; /* Warna garis tepi */
+        --display-bg: #080a0e; /* Latar layar display */
+        --accent: #ffffff; /* Warna aksen biru cyan */
+        --accent2: #ff6b35; /* Aksen oranye untuk operator */
+        --accent3: #7c3aed; /* Aksen ungu untuk tombol fungsi */
+        --text-main: #e2e8f0; /* Warna teks utama */
+        --text-dim: #4a5568; /* Warna teks redup */
+        --btn-num: #1a1e2a; /* Latar tombol angka */
+        --btn-num-h: #222738; /* Tombol angka saat hover */
+        --btn-op: #1e1a2a; /* Latar tombol operator */
+        --btn-op-h: #2a2038; /* Tombol operator saat hover */
+        --btn-fn: #14182a; /* Latar tombol fungsi scientific */
+        --btn-fn-h: #1c2140; /* Tombol fungsi saat hover */
+        --btn-eq: #004d60; /* Latar tombol sama dengan */
+        --btn-eq-h: #006680; /* Tombol = saat hover */
+        --glow: 0 0 18px rgba(0, 229, 255, 0.18); /* Efek cahaya */
+        --radius: 10px; /* Sudut melengkung tombol */
+      }
+
+      /* =====================================================
+         RESET & BASE
+         Menghapus margin/padding bawaan browser dan
+         mengatur font serta ukuran dasar.
+      ===================================================== */
+      *,
+      *::before,
+      *::after {
+        box-sizing: border-box;
+        margin: 0;
+        padding: 0;
+      }
+
+      body {
+        padding: 0 5px;
+        background: var(--bg);
+        min-height: 100vh;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        font-family: "Rajdhani", sans-serif;
+        /* Pola grid dekoratif di latar belakang */
+        background-image:
+          linear-gradient(rgba(0, 229, 255, 0.03) 1px, transparent 1px),
+          linear-gradient(90deg, rgba(0, 229, 255, 0.03) 1px, transparent 1px);
+        background-size: 40px 40px;
+      }
+
+      /* =====================================================
+         WRAPPER KALKULATOR
+         Kontainer utama yang membungkus seluruh kalkulator.
+      ===================================================== */
+      .calc-wrapper {
+        width: 380px;
+        background: var(--panel);
+        border: 1px solid var(--border);
+        border-radius: 20px;
+        padding: 24px 20px 20px;
+        box-shadow:
+          0 30px 80px rgba(0, 0, 0, 0.6),
+          0 0 0 1px rgba(0, 229, 255, 0.06),
+          var(--glow);
+        position: relative;
+        overflow: hidden;
+      }
+
+      /* Garis dekoratif di bagian atas kalkulator */
+      .calc-wrapper::before {
+        content: "";
+        position: absolute;
+        top: 0;
+        left: 20%;
+        right: 20%;
+        height: 2px;
+        background: linear-gradient(
+          90deg,
+          transparent,
+          var(--accent),
+          transparent
+        );
+        border-radius: 2px;
+      }
+
+      /* =====================================================
+         HEADER KALKULATOR
+         Menampilkan judul dan label mode (Scientific).
+      ===================================================== */
+      .calc-header {
+        display: flex;
+        justify-content: space-between;
+        align-items: center;
+        margin-bottom: 16px;
+        padding: 0 2px;
+      }
+
+      .calc-title {
+        font-size: 11px;
+        letter-spacing: 3px;
+        text-transform: uppercase;
+        color: var(--text-dim);
+      }
+
+      .calc-mode {
+        font-size: 10px;
+        letter-spacing: 2px;
+        color: var(--accent);
+        text-transform: uppercase;
+        background: rgba(0, 229, 255, 0.08);
+        padding: 3px 8px;
+        border-radius: 4px;
+        border: 1px solid rgba(0, 229, 255, 0.2);
+      }
+
+      /* =====================================================
+         LAYAR DISPLAY
+         Menampilkan ekspresi yang diketik dan hasil kalkulasi.
+      ===================================================== */
+      .display {
+        background: var(--display-bg);
+        border: 1px solid var(--border);
+        border-radius: 12px;
+        padding: 14px 18px 10px;
+        margin-bottom: 16px;
+        min-height: 90px;
+        display: flex;
+        flex-direction: column;
+        justify-content: flex-end;
+        align-items: flex-end;
+        position: relative;
+        overflow: hidden;
+      }
+
+      /* Scan-line effect untuk kesan layar retro */
+      .display::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: repeating-linear-gradient(
+          to bottom,
+          transparent,
+          transparent 3px,
+          rgba(0, 0, 0, 0.04) 3px,
+          rgba(0, 0, 0, 0.04) 4px
+        );
+        pointer-events: none;
+      }
+
+      /* Area ekspresi (apa yang sedang diketik pengguna) */
+      #expression {
+        font-family: "Share Tech Mono", monospace;
+        font-size: 14px;
+        color: var(--text-dim);
+        min-height: 20px;
+        word-break: break-all;
+        text-align: right;
+        max-width: 100%;
+        margin-bottom: 6px;
+        transition: color 0.2s;
+      }
+
+      /* Area hasil kalkulasi */
+      #result {
+        font-family: "Share Tech Mono", monospace;
+        font-size: 32px;
+        color: var(--text-main);
+        word-break: break-all;
+        text-align: right;
+        max-width: 100%;
+        transition:
+          font-size 0.15s,
+          color 0.2s;
+        text-shadow: 0 0 20px rgba(0, 229, 255, 0.3);
+      }
+
+      /* Ukuran font mengecil jika angka terlalu panjang */
+      #result.small {
+        font-size: 22px;
+      }
+      #result.error {
+        color: #fc8181;
+        text-shadow: 0 0 20px rgba(252, 129, 129, 0.4);
+      }
+
+      /* =====================================================
+         TOGGLE MODE SCIENTIFIC
+         Tombol kecil untuk menampilkan/menyembunyikan
+         baris tombol fungsi scientific.
+      ===================================================== */
+      .mode-toggle {
+        display: flex;
+        gap: 8px;
+        margin-bottom: 12px;
+      }
+
+      .toggle-btn {
+        flex: 1;
+        padding: 7px;
+        border: 1px solid var(--border);
+        border-radius: 8px;
+        background: transparent;
+        color: var(--text-dim);
+        font-family: "Rajdhani", sans-serif;
+        font-size: 12px;
+        font-weight: 600;
+        letter-spacing: 1.5px;
+        text-transform: uppercase;
+        cursor: pointer;
+        transition: all 0.2s;
+      }
+
+      /* Gaya tombol toggle saat aktif/dipilih */
+      .toggle-btn.active {
+        background: rgba(0, 229, 255, 0.08);
+        border-color: var(--accent);
+        color: var(--accent);
+      }
+
+      .toggle-btn:hover:not(.active) {
+        border-color: #2d3748;
+        color: var(--text-main);
+      }
+
+      /* =====================================================
+         GRID TOMBOL SCIENTIFIC
+         Baris tambahan yang muncul di mode scientific.
+         Disembunyikan secara default.
+      ===================================================== */
+      .sci-grid {
+        display: grid;
+        grid-template-columns: repeat(5, 1fr); /* 5 kolom */
+        gap: 7px;
+        margin-bottom: 10px;
+        /* Animasi slide-down saat ditampilkan */
+        overflow: hidden;
+        max-height: 0;
+        opacity: 0;
+        transition:
+          max-height 0.35s ease,
+          opacity 0.35s ease,
+          margin 0.35s;
+      }
+
+      /* Saat mode scientific aktif, tampilkan tombol */
+      .sci-grid.visible {
+        max-height: 200px;
+        opacity: 1;
+        margin-bottom: 10px;
+      }
+
+      /* =====================================================
+         GRID TOMBOL UTAMA
+         Grid 4 kolom untuk angka, operator, dan tombol lain.
+      ===================================================== */
+      .main-grid {
+        display: grid;
+        grid-template-columns: repeat(4, 1fr); /* 4 kolom */
+        gap: 7px;
+      }
+
+      /* =====================================================
+         TOMBOL (BUTTON)
+         Gaya dasar untuk semua tombol kalkulator.
+      ===================================================== */
+      button {
+        border: none;
+        border-radius: var(--radius);
+        cursor: pointer;
+        font-family: "Share Tech Mono", monospace;
+        font-size: 15px;
+        padding: 14px 8px;
+        transition: all 0.12s ease;
+        position: relative;
+        overflow: hidden;
+        /* Garis tepi halus di atas tombol */
+        border-top: 1px solid rgba(255, 255, 255, 0.05);
+      }
+
+      /* Efek ripple (gelombang) saat tombol diklik */
+      button::after {
+        content: "";
+        position: absolute;
+        inset: 0;
+        background: rgba(255, 255, 255, 0.06);
+        opacity: 0;
+        transition: opacity 0.15s;
+      }
+      button:active::after {
+        opacity: 1;
+      }
+
+      /* Efek tekan ke bawah saat diklik */
+      button:active {
+        transform: scale(0.95);
+      }
+
+      /* --- Tombol Angka (0-9 dan titik desimal) --- */
+      .btn-num {
+        background: var(--btn-num);
+        color: var(--text-main);
+      }
+      .btn-num:hover {
+        background: var(--btn-num-h);
+      }
+
+      /* --- Tombol Operator (+, -, ×, ÷) --- */
+      .btn-op {
+        background: var(--btn-op);
+        color: var(--accent2);
+        font-size: 18px;
+        border-top-color: rgba(255, 107, 53, 0.1);
+      }
+      .btn-op:hover {
+        background: var(--btn-op-h);
+      }
+
+      /* --- Tombol Fungsi Scientific (sin, cos, log, dll) --- */
+      .btn-fn {
+        background: var(--btn-fn);
+        color: var(--accent3);
+        font-size: 12px;
+        letter-spacing: 0.5px;
+        border-top-color: rgba(124, 58, 237, 0.1);
+      }
+      .btn-fn:hover {
+        background: var(--btn-fn-h);
+      }
+
+      /* --- Tombol Sama Dengan (=) --- */
+      .btn-eq {
+        background: var(--btn-eq);
+        color: var(--accent);
+        font-size: 20px;
+        border-top-color: rgba(0, 229, 255, 0.15);
+        box-shadow: 0 4px 15px rgba(0, 229, 255, 0.1);
+      }
+      .btn-eq:hover {
+        background: var(--btn-eq-h);
+        box-shadow: 0 4px 20px rgba(0, 229, 255, 0.2);
+      }
+
+      /* --- Tombol AC / Clear --- */
+      .btn-clear {
+        background: #1a0f0f;
+        color: #fc8181;
+        border-top-color: rgba(252, 129, 129, 0.1);
+      }
+      .btn-clear:hover {
+        background: #221313;
+      }
+
+      /* --- Tombol Utilitas (%, ±, backspace) --- */
+      .btn-util {
+        background: var(--btn-fn);
+        color: #a0aec0;
+        font-size: 13px;
+      }
+      .btn-util:hover {
+        background: var(--btn-fn-h);
+        color: var(--text-main);
+      }
+
+      /* Tombol yang memakan 2 kolom (tombol 0) */
+      .span2 {
+        grid-column: span 2;
+      }
+
+      /* =====================================================
+         INDIKATOR RAD / DEG
+         Menunjukkan mode sudut yang sedang aktif.
+      ===================================================== */
+      .angle-indicator {
+        position: absolute;
+        top: 12px;
+        left: 16px;
+        font-size: 10px;
+        letter-spacing: 1.5px;
+        color: rgba(0, 229, 255, 0.5);
+        text-transform: uppercase;
+        font-family: "Rajdhani", sans-serif;
+        font-weight: 600;
+      }
+    </style>
+  </head>
+  <body>
+    <!-- =====================================================
+     STRUKTUR HTML KALKULATOR
+===================================================== -->
+    <div class="calc-wrapper">
+      <!-- Header: Judul dan badge mode -->
+      <div class="calc-header">
+        <span class="calc-title">Kalkulator</span>
+        <span class="calc-mode">Scientific</span>
+      </div>
+
+      <!-- Layar Display -->
+      <div class="display">
+        <span class="angle-indicator" id="angleLabel">RAD</span>
+        <!-- Menampilkan ekspresi yang sedang diketik -->
+        <div id="expression"></div>
+        <!-- Menampilkan hasil kalkulasi -->
+        <div id="result">0</div>
+      </div>
+
+      <!-- Tombol Toggle Mode: Standar / Scientific -->
+      <div class="mode-toggle">
+        <button class="toggle-btn" id="btnStd" onclick="setMode('standard')">
+          Standar
+        </button>
+        <button
+          class="toggle-btn active"
+          id="btnSci"
+          onclick="setMode('scientific')"
+        >
+          Scientific
+        </button>
+      </div>
+
+      <!-- Grid Tombol Scientific (tersembunyi di mode standar) -->
+      <div class="sci-grid visible" id="sciGrid">
+        <!-- Baris 1: Fungsi trigonometri & konstanta -->
+        <button class="btn-fn" onclick="inputFn('sin(')">sin</button>
+        <button class="btn-fn" onclick="inputFn('cos(')">cos</button>
+        <button class="btn-fn" onclick="inputFn('tan(')">tan</button>
+        <button class="btn-fn" onclick="inputConst('Math.PI')">π</button>
+        <button class="btn-fn" onclick="inputConst('Math.E')">e</button>
+
+        <!-- Baris 2: Fungsi lanjutan -->
+        <button class="btn-fn" onclick="inputFn('log(')">log</button>
+        <button class="btn-fn" onclick="inputFn('ln(')">ln</button>
+        <button class="btn-fn" onclick="inputFn('sqrt(')">√</button>
+        <button class="btn-fn" onclick="applySquare()">x²</button>
+        <button class="btn-fn" onclick="inputFn('pow(')">xʸ</button>
+
+        <!-- Baris 3: Fungsi tambahan -->
+        <button class="btn-fn" onclick="inputFn('abs(')">|x|</button>
+        <button class="btn-fn" onclick="inputFn('fact(')">n!</button>
+        <button class="btn-fn" onclick="inputFn('1/(')">1/x</button>
+        <button class="btn-fn" onclick="inputStr('(')">(</button>
+        <button class="btn-fn" onclick="inputStr(')')">)</button>
+        <button class="btn-fn" onclick="toggleAngle()">RAD</button>
+      </div>
+
+      <!-- Grid Tombol Utama -->
+      <div class="main-grid">
+        <!-- Baris 1: AC, ±, %, ÷ -->
+        <button class="btn-clear" onclick="clearAll()">AC</button>
+        <button class="btn-util" onclick="toggleSign()">±</button>
+        <button class="btn-util" onclick="inputStr('%')">%</button>
+        <button class="btn-op" onclick="inputStr('/')">÷</button>
+
+        <!-- Baris 2: 7, 8, 9, × -->
+        <button class="btn-num" onclick="inputStr('7')">7</button>
+        <button class="btn-num" onclick="inputStr('8')">8</button>
+        <button class="btn-num" onclick="inputStr('9')">9</button>
+        <button class="btn-op" onclick="inputStr('*')">×</button>
+
+        <!-- Baris 3: 4, 5, 6, − -->
+        <button class="btn-num" onclick="inputStr('4')">4</button>
+        <button class="btn-num" onclick="inputStr('5')">5</button>
+        <button class="btn-num" onclick="inputStr('6')">6</button>
+        <button class="btn-op" onclick="inputStr('-')">−</button>
+
+        <!-- Baris 4: 1, 2, 3, + -->
+        <button class="btn-num" onclick="inputStr('1')">1</button>
+        <button class="btn-num" onclick="inputStr('2')">2</button>
+        <button class="btn-num" onclick="inputStr('3')">3</button>
+        <button class="btn-op" onclick="inputStr('+')">+</button>
+
+        <!-- Baris 5: 0 (lebar 2), titik, = -->
+        <button class="btn-num span2" onclick="inputStr('0')">0</button>
+        <button class="btn-num" onclick="inputDot()">.</button>
+        <button class="btn-eq" onclick="calculate()">=</button>
+      </div>
+    </div>
+    <!-- /.calc-wrapper -->
+
+    <!-- =====================================================
+     JAVASCRIPT — LOGIKA KALKULATOR
+===================================================== -->
+    <script>
+      // ===================================================
+      // VARIABEL STATE (KONDISI/STATUS KALKULATOR)
+      // ===================================================
+
+      let expression = ""; // String ekspresi yang diketik pengguna
+      let lastResult = null; // Menyimpan hasil kalkulasi terakhir
+      let isResult = false; // Apakah tampilan sedang menunjukkan hasil?
+      let isRad = true; // true = Radian, false = Derajat (untuk trig)
+
+      // Referensi ke elemen HTML yang sering diakses
+      const exprEl = document.getElementById("expression");
+      const resultEl = document.getElementById("result");
+
+      // ===================================================
+      // FUNGSI DISPLAY — Memperbarui tampilan layar
+      // ===================================================
+      function updateDisplay() {
+        // Tampilkan ekspresi (dengan simbol yang lebih manusiawi)
+        exprEl.textContent = expression
+          .replace(/\*/g, "×")
+          .replace(/\//g, "÷")
+          .replace(/Math\.PI/g, "π")
+          .replace(/Math\.E/g, "e");
+
+        // Sesuaikan ukuran font jika angka terlalu panjang
+        const len = resultEl.textContent.length;
+        resultEl.classList.toggle("small", len > 14);
+        resultEl.classList.remove("error");
+      }
+
+      // ===================================================
+      // INPUT ANGKA / KARAKTER BIASA
+      // Dipanggil oleh tombol 0-9, +, -, *, /
+      // ===================================================
+      function inputStr(char) {
+        // Jika sebelumnya sudah ada hasil, mulai ekspresi baru
+        // dengan melanjutkan dari hasil tersebut
+        if (isResult && /[0-9(]/.test(char)) {
+          expression = lastResult !== null ? String(lastResult) : "";
+          isResult = false;
+        } else if (isResult) {
+          isResult = false;
+        }
+
+        expression += char;
+        updateDisplay();
+        livePreview(); // Tampilkan preview hasil sementara
+      }
+
+      // ===================================================
+      // INPUT FUNGSI SCIENTIFIC
+      // Contoh: sin(, cos(, sqrt(, log(
+      // ===================================================
+      function inputFn(fn) {
+        // Jika tombolnya adalah "pow(", kita ubah alurnya
+        if (fn === "pow(") {
+          // Kita cek apakah ada angka sebelumnya. Jika ada, bungkus jadi pow(angka,
+          const match = expression.match(/(\d+(\.\d+)?)$/);
+          if (match) {
+            const num = match[0];
+            expression = expression.slice(0, -num.length) + "pow(" + num + ",";
+          } else {
+            expression += "pow(";
+          }
+        } else {
+          // Untuk fungsi lain seperti sin, cos, sqrt
+          expression += fn;
+        }
+        updateDisplay();
+        livePreview();
+      }
+
+      // ===================================================
+      // INPUT KONSTANTA (π dan e)
+      // ===================================================
+      function inputConst(c) {
+        if (isResult) {
+          expression = "";
+          isResult = false;
+        }
+        expression += c;
+        updateDisplay();
+        livePreview();
+      }
+
+      // fungsi pangkat
+      function applySquare() {
+        const match = expression.match(/(\d+(\.\d+)?)$/);
+        if (match) {
+          const num = match[0];
+          expression = expression.slice(0, -num.length) + "pow2(" + num + ")";
+        } else {
+          expression += "pow2(";
+        }
+        updateDisplay();
+        livePreview();
+      }
+      // ===================================================
+      // INPUT TITIK DESIMAL
+      // Mencegah pengguna memasukkan dua titik dalam satu angka
+      // ===================================================
+      function inputDot() {
+        if (isResult) {
+          expression = "0";
+          isResult = false;
+        }
+
+        // Cari bilangan terakhir dalam ekspresi
+        const parts = expression.split(/[\+\-\*\/\(]/);
+        const lastPart = parts[parts.length - 1];
+
+        // Hanya tambahkan titik jika belum ada di bilangan terakhir
+        if (!lastPart.includes(".")) {
+          if (expression === "" || /[\+\-\*\/\(]$/.test(expression)) {
+            expression += "0"; // Awali dengan 0 jika belum ada angka
+          }
+          expression += ".";
+          updateDisplay();
+        }
+      }
+
+      // ===================================================
+      // HAPUS SEMUA (AC)
+      // Mereset kalkulator ke kondisi awal
+      // ===================================================
+      function clearAll() {
+        expression = "";
+        lastResult = null;
+        isResult = false;
+        resultEl.textContent = "0";
+        exprEl.textContent = "";
+        resultEl.classList.remove("error", "small");
+      }
+
+      // ===================================================
+      // TOGGLE TANDA ±
+      // Mengubah angka positif ke negatif atau sebaliknya
+      // ===================================================
+      function toggleSign() {
+        if (expression === "" || expression === "0") return;
+
+        // Jika ekspresi dimulai dengan minus, hapus minusnya
+        if (expression.startsWith("-")) {
+          expression = expression.slice(1);
+        } else {
+          // Jika tidak, tambahkan minus di depan
+          expression = "-" + expression;
+        }
+        updateDisplay();
+        livePreview();
+      }
+
+      // ===================================================
+      // TOGGLE RAD / DEG
+      // Mengubah mode sudut untuk fungsi trigonometri
+      // ===================================================
+      function toggleAngle() {
+        isRad = !isRad;
+        // Perbarui tampilan indikator di layar dan teks tombol
+        document.getElementById("angleLabel").textContent = isRad
+          ? "RAD"
+          : "DEG";
+        // Cari tombol RAD di sci-grid dan perbarui teksnya
+        document.querySelectorAll(".btn-fn").forEach((btn) => {
+          if (btn.textContent === "RAD" || btn.textContent === "DEG") {
+            btn.textContent = isRad ? "RAD" : "DEG";
+          }
+        });
+      }
+
+      // ===================================================
+      // SET MODE: STANDARD / SCIENTIFIC
+      // Menampilkan atau menyembunyikan tombol scientific
+      // ===================================================
+      function setMode(mode) {
+        const sciGrid = document.getElementById("sciGrid");
+        const btnStd = document.getElementById("btnStd");
+        const btnSci = document.getElementById("btnSci");
+
+        if (mode === "scientific") {
+          sciGrid.classList.add("visible"); // Tampilkan grid scientific
+          btnSci.classList.add("active");
+          btnStd.classList.remove("active");
+        } else {
+          sciGrid.classList.remove("visible"); // Sembunyikan grid scientific
+          btnStd.classList.add("active");
+          btnSci.classList.remove("active");
+        }
+      }
+
+      // ===================================================
+      // PREVIEW LANGSUNG (Live Preview)
+      // Menampilkan hasil sementara saat pengguna mengetik,
+      // tanpa perlu menekan tombol =
+      // ===================================================
+      function livePreview() {
+        if (!expression) {
+          resultEl.textContent = "0";
+          resultEl.classList.remove("error");
+          return;
+        }
+
+        try {
+          // Tambahkan penanganan kurung otomatis agar livePreview tidak error
+          // saat pengguna belum menutup kurung
+          let tempExpr = expression;
+          let openCount = (tempExpr.match(/\(/g) || []).length;
+          let closeCount = (tempExpr.match(/\)/g) || []).length;
+
+          // Tambahkan kurung tutup sementara untuk evaluasi jika perlu
+          if (openCount > closeCount) {
+            tempExpr += ")".repeat(openCount - closeCount);
+          }
+
+          const val = safeEval(tempExpr);
+
+          if (isFinite(val) && !isNaN(val)) {
+            resultEl.textContent = formatThousands(val);
+            // resultEl.textContent = formatNumber(val);
+            resultEl.classList.remove("error");
+          } else {
+            // Hasil tidak valid (misal: "5/0"), tampilkan simbol/kosongkan
+            resultEl.textContent = "0";
+          }
+        } catch (e) {
+          // Biarkan resultEl tetap menampilkan hasil terakhir yang valid
+          // atau tetap diam jika memang belum ada hasil.
+          // Anda bisa menambahkan log ini hanya jika perlu debugging:
+          // console.log("Menunggu input lengkap...");
+        }
+      }
+
+      // ===================================================
+      // HITUNG (=)
+      // Mengevaluasi ekspresi dan menampilkan hasil akhir
+      // ===================================================
+      function calculate() {
+        if (!expression) return;
+
+        try {
+          // 1. Antisipasi kurung yang belum tertutup
+          let openCount = (expression.match(/\(/g) || []).length;
+          let closeCount = (expression.match(/\)/g) || []).length;
+
+          // Tambahkan kurung tutup sebanyak yang kurang di akhir ekspresi
+          let finalExpression = expression;
+          if (openCount > closeCount) {
+            finalExpression += ")".repeat(openCount - closeCount);
+          }
+
+          // 2. Evaluasi menggunakan ekspresi yang sudah diperbaiki
+          const val = safeEval(finalExpression);
+
+          if (!isFinite(val) || isNaN(val)) {
+            throw new Error("Hasil tidak valid");
+          }
+
+          // 3. Update tampilan
+          exprEl.textContent =
+            expression
+              .replace(/\*/g, "×")
+              .replace(/\//g, "÷")
+              .replace(/Math\.PI/g, "π")
+              .replace(/Math\.E/g, "e") + " =";
+
+          lastResult = val;
+          resultEl.textContent = formatNumber(val);
+          resultEl.classList.remove("error");
+
+          // Simpan hasil ke expression untuk operasi selanjutnya
+          expression = String(val);
+          isResult = true;
+        } catch (err) {
+          resultEl.textContent = "Error";
+          resultEl.classList.add("error");
+          // Jangan hapus expression agar user bisa memperbaiki typo-nya
+          isResult = false;
+        }
+      }
+
+      // ===================================================
+      // SAFE EVAL — Mengevaluasi Ekspresi dengan Aman
+      // Mengubah string ekspresi menjadi JavaScript yang bisa
+      // dieksekusi, lalu menghitung hasilnya.
+      //
+      // CATATAN KEAMANAN: Menggunakan Function() bukan eval()
+      // agar lebih terkontrol. Fungsi khusus (sin, cos, log, dll)
+      // dibuat sendiri agar tidak ada akses ke objek berbahaya.
+      // ===================================================
+
+      function safeEval(expr) {
+        // 1. Bersihkan input dari karakter yang tidak diinginkan
+        // Mencegah error jika ekspresi berakhir dengan operator atau koma
+        let cleanExpr = expr.replace(/[+\-\*\/\(,]+$/, "");
+
+        // 2. Definisi fungsi
+        const fns = {
+          sin: (x) => Math.sin(isRad ? x : (x * Math.PI) / 180),
+          cos: (x) => Math.cos(isRad ? x : (x * Math.PI) / 180),
+          tan: (x) => Math.tan(isRad ? x : (x * Math.PI) / 180),
+          log: (x) => Math.log10(x),
+          ln: (x) => Math.log(x),
+          sqrt: (x) => Math.sqrt(x),
+          pow2: (x) => Math.pow(x, 2),
+          pow: (x, y) => Math.pow(x, y),
+          abs: (x) => Math.abs(x),
+          fact: (x) => {
+            if (x < 0 || !Number.isInteger(x)) return NaN;
+            let res = 1;
+            for (let i = 2; i <= x; i++) res *= i;
+            return res;
+          },
+        };
+
+        try {
+          // 3. Transformasi Ekspresi
+          let safeExpr = cleanExpr;
+          const keys = Object.keys(fns).sort((a, b) => b.length - a.length);
+          keys.forEach((key) => {
+            const regex = new RegExp(`\\b${key}\\b`, "g");
+            safeExpr = safeExpr.replace(regex, `fns.${key}`);
+          });
+
+          // 4. Eksekusi dengan pencegahan kurung kosong
+          // Jika ekspresi hanya berisi operator/titik, jangan dieksekusi
+          if (!/[0-9πe]/.test(safeExpr)) return 0;
+
+          const execute = new Function(
+            "fns",
+            `with(Math) { return ${safeExpr} }`,
+          );
+          return execute(fns);
+        } catch (err) {
+          // Return NaN diam-diam agar livePreview tidak memunculkan Error di konsol
+          return NaN;
+        }
+      }
+
+      // ===================================================
+      // FORMAT ANGKA
+      // Memformat angka agar tampil rapi di layar
+      // ===================================================
+      function formatNumber(n) {
+        // Jika angka sangat kecil atau sangat besar, gunakan notasi ilmiah
+        if (Math.abs(n) < 1e-10 && n !== 0) return n.toExponential(6);
+        if (Math.abs(n) >= 1e15) return n.toExponential(6);
+
+        // Batasi 10 angka desimal, lalu hapus nol yang tidak perlu
+        const s = parseFloat(n.toFixed(10)).toString();
+        return s;
+      }
+
+      // ===================================================
+      // KEYBOARD SUPPORT — Dukungan Input dari Keyboard
+      // Memungkinkan pengguna mengetik menggunakan keyboard fisik
+      // ===================================================
+      document.addEventListener("keydown", (e) => {
+        // Petakan tombol keyboard ke aksi kalkulator
+        const map = {
+          0: "0",
+          1: "1",
+          2: "2",
+          3: "3",
+          4: "4",
+          5: "5",
+          6: "6",
+          7: "7",
+          8: "8",
+          9: "9",
+          "+": "+",
+          "-": "-",
+          "*": "*",
+          "/": "/",
+          ".": ".",
+          "(": ")",
+          ")": { fn: () => inputStr(")") },
+          Enter: "=",
+          "=": "=",
+          Backspace: "back",
+          Escape: "AC",
+          Delete: "AC",
+          "%": "%",
+        };
+
+        if (e.key === "Enter" || e.key === "=") {
+          calculate();
+          return;
+        }
+        if (e.key === "Backspace") {
+          // Hapus satu karakter terakhir
+          expression = expression.slice(0, -1);
+          updateDisplay();
+          livePreview();
+          return;
+        }
+        if (e.key === "Escape" || e.key === "Delete") {
+          clearAll();
+          return;
+        }
+
+        // Tombol angka, operator, dan titik
+        if (/^[0-9\+\-\*\/\.\(\)%]$/.test(e.key)) {
+          if (e.key === ".") {
+            inputDot();
+          } else {
+            inputStr(e.key);
+          }
+        }
+      });
+
+      function formatThousands(n) {
+        if (isNaN(n)) return "0";
+        // Memisahkan integer dan desimal agar titik desimal tidak ikut terformat
+        let parts = n.toString().split(".");
+        parts[0] = parts[0].replace(/\B(?=(\d{3})+(?!\d))/g, ",");
+        return parts.join(".");
+      }
+    </script>
+  </body>
+</html>
